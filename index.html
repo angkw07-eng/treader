@@ -232,11 +232,109 @@ td:last-child{border-right:none;}
 .pr-popup.show{display:flex;}
 .pr-popup-inner{background:#fff;border-radius:12px;padding:24px;width:320px;box-shadow:var(--sh-lg);}
 
+/* ── FAB (모바일 거래추가 버튼) ── */
+.fab{display:none;position:fixed;bottom:20px;right:20px;z-index:200;
+  width:52px;height:52px;border-radius:50%;
+  background:var(--green);color:#fff;border:none;
+  font-size:26px;cursor:pointer;box-shadow:0 4px 14px rgba(47,158,68,.45);
+  align-items:center;justify-content:center;transition:transform .15s;}
+.fab:active{transform:scale(.94);}
+
+/* ── 모바일 하단 내비 ── */
+.mob-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:150;
+  background:#fff;border-top:1px solid var(--border);
+  display:none;justify-content:space-around;padding:6px 0 env(safe-area-inset-bottom,6px);}
+.mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;
+  font-size:10px;color:var(--text3);cursor:pointer;padding:4px 12px;border:none;background:none;
+  flex:1;}
+.mob-nav-item.active{color:var(--green);}
+.mob-nav-item span{font-size:18px;line-height:1;}
+
+/* ── 모바일 카드 뷰 (테이블 대체) ── */
+.card-list{display:none;flex-direction:column;gap:10px;}
+.trade-card{background:#fff;border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;box-shadow:var(--sh);}
+.trade-card-hdr{display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg2);}
+.trade-card-date{font-family:var(--mono);font-size:12px;color:var(--text2);font-weight:600;}
+.trade-card-nums{display:flex;gap:10px;align-items:center;}
+.trade-card-pnl{font-family:var(--mono);font-size:13px;font-weight:700;}
+.trade-card-rate{font-size:11px;font-family:var(--mono);}
+.trade-card-body{padding:10px 14px;}
+.trade-card-section{margin-bottom:8px;}
+.trade-card-section:last-child{margin-bottom:0;}
+.trade-card-label{font-size:9px;text-transform:uppercase;letter-spacing:.07em;
+  color:var(--text3);margin-bottom:4px;}
+.trade-card-content{font-size:12.5px;line-height:1.7;color:var(--text2);}
+.trade-card-acts{display:flex;gap:8px;padding:8px 14px;border-top:1px solid var(--border);}
+.trade-card-acts .btn{flex:1;font-size:12px;padding:7px 0;text-align:center;}
+
+/* ── DESKTOP MEDIA ── */
+@media(min-width:641px){
+  .fab{display:none!important;}
+  .mob-nav{display:none!important;}
+  .card-list{display:none!important;}
+  .tcard{display:block;}
+}
+
+/* ── MOBILE MEDIA ── */
 @media(max-width:640px){
-  .hdr,.sum-bar,.prog,.main,.round-bar{padding-left:14px;padding-right:14px;}
-  .fgrid{grid-template-columns:1fr;}
-  .modal{padding:16px;border-radius:10px;}
-  table{min-width:720px;}
+  /* layout */
+  html{font-size:13px;}
+  body{padding-bottom:80px;}
+  .hdr{padding:0 12px;height:50px;}
+  .hdr-sub{display:none;}
+  .hdr-r .btn:not(.btn-g){display:none;}
+  .hdr-r .btn-g{display:none;}/* 헤더 추가버튼 숨김, FAB 사용 */
+  .hdr-r{gap:8px;}
+  .status span{max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;}
+
+  /* round tabs */
+  .round-bar{padding:0 12px;}
+  .rtab{padding:8px 12px;font-size:11px;}
+
+  /* summary */
+  .sum-bar{padding:0;display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;}
+  .si{padding:8px 12px;margin:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);min-width:0;}
+  .si:nth-child(3n){border-right:none;}
+  .si:nth-last-child(-n+3):nth-child(3n+1){border-bottom:none;}
+  .si:nth-last-child(-n+2):nth-child(3n+2){border-bottom:none;}
+  .si:last-child{border-bottom:none;}
+  .si-lbl{font-size:8px;}
+  .si-val{font-size:13px;}
+
+  /* progress */
+  .prog{padding:7px 12px;gap:8px;}
+  .prog-track{max-width:none;}
+
+  /* main */
+  .main{padding:10px 12px;}
+  .toolbar{margin-bottom:8px;}
+  .tb-hint{display:none;}
+
+  /* hide table, show cards */
+  .tcard{display:none;}
+  .card-list{display:flex;}
+
+  /* FAB */
+  .fab{display:flex;}
+
+  /* modal */
+  .overlay{padding:0;align-items:flex-end;}
+  .modal{border-radius:18px 18px 0 0;padding:20px 16px;
+    max-height:92vh;overflow-y:auto;margin:0;max-width:100%;}
+  .modal-hdr{margin-bottom:12px;}
+  .fgrid{grid-template-columns:1fr 1fr;}
+  .lc{gap:12px;}
+
+  /* round settings modal */
+  #round-settings-modal .modal{max-width:100%;}
+
+  /* start pr popup */
+  .pr-popup-inner{width:calc(100% - 32px);border-radius:14px;}
+
+  /* format toolbar */
+  .ftb{max-width:calc(100vw - 16px);}
 }
 </style>
 </head>
@@ -309,7 +407,12 @@ td:last-child{border-right:none;}
       <tbody id="tbody"></tbody>
     </table>
   </div>
+  <!-- 모바일 카드 뷰 -->
+  <div class="card-list" id="card-list"></div>
 </div>
+
+<!-- FAB (모바일 전용 거래추가 버튼) -->
+<button class="fab" onclick="openAdd()" title="거래 추가">＋</button>
 
 <!-- FORMAT TOOLBAR -->
 <div class="ftb" id="ftb">
@@ -466,7 +569,7 @@ td:last-child{border-right:none;}
      SINGLE SCRIPT BLOCK — ALL JS HERE
 ════════════════════════════════════════════════ -->
 <script>
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzivr-FfEIfvlioDtMgZxRqguapfyZCkCnVDhOh_KrrlC0z5tDj_PNklzgN2OFs2KAKdg/exec';
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxhwJh8oDla9h2MqVdLGmvSLEMCgppy0XvhhI84VNLWXbrzM-Gjrwd0s0k7cn1ewxe87g/exec';
 const PALETTE    = ['#e67700','#1971c2','#2f9e44','#6741d9','#e03131','#0c8599','#c92a2a','#5f3dc4','#2b8a3e','#a61e4d'];
 
 const DEFAULT_ROUNDS = [
@@ -736,8 +839,10 @@ async function quickDelete(id){
 /* ── RENDER ── */
 function renderEmpty(msg){
   document.getElementById('row-count').textContent='0';
-  document.getElementById('tbody').innerHTML=
-    `<tr><td colspan="7" class="empty-row">${msg||ROUND_NAMES()[curRound-1]+' 데이터가 없습니다.<br><small>[＋ 거래 추가] 버튼으로 입력하세요.</small>'}</td></tr>`;
+  const emptyHtml=`<tr><td colspan="7" class="empty-row">${msg||ROUND_NAMES()[curRound-1]+' 데이터가 없습니다.<br><small>[＋ 거래 추가] 버튼으로 입력하세요.</small>'}</td></tr>`;
+  document.getElementById('tbody').innerHTML=emptyHtml;
+  document.getElementById('card-list').innerHTML=
+    `<div style="text-align:center;color:var(--text4);padding:40px 20px;font-size:13px;">${msg||ROUND_NAMES()[curRound-1]+' 데이터가 없습니다.<br><small>[＋] 버튼으로 입력하세요.</small>'}</div>`;
   updateSummary(0,0,0);
 }
 
@@ -782,10 +887,50 @@ function render(){
     <td><div class="td-p td-num ${cc(tr)}">${fmtR(tr)}</div></td>
     <td colspan="3"></td></tr>`;
   tb.innerHTML=html;
+  renderCards(rows);
   updateSummary(init,init+cum,cum);
 }
 
-function updateSummary(init,cur,cum){
+function renderCards(rows){
+  const list=document.getElementById('card-list');
+  if(!rows||!rows.length){list.innerHTML='';return;}
+  list.innerHTML=rows.map(r=>{
+    const rt=(r.pr&&r.pnl)?Math.round(r.pnl/r.pr*10000)/100:0;
+    const todText=(r.tod||'').replace(/\n/g,'<br>');
+    const m2Text=(r.m2||'').replace(/\n/g,'<br>');
+    const imgs=(r.images&&r.images.length)?
+      `<div class="tbl-imgs" style="margin-top:6px;">${r.images.map(img=>`<img class="tbl-img" src="${img.url}" onclick="openViewer('${img.url}')">`).join('')}</div>`:'';
+    return `<div class="trade-card">
+      <div class="trade-card-hdr">
+        <div class="trade-card-date">${r.date?r.date.replace(/-/g,'.'):'—'} ${dstr(r.date)}</div>
+        <div class="trade-card-nums">
+          <span class="trade-card-pnl ${cc(r.pnl)}">${r.pnl?(r.pnl>=0?'+':'')+fmt(r.pnl)+'원':'—'}</span>
+          <span class="trade-card-rate ${cc(rt)}">${rt?fmtR(rt):'—'}</span>
+        </div>
+      </div>
+      <div class="trade-card-body">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">
+          원금 <span style="font-family:var(--mono);color:var(--text);font-weight:600;">${fmt(r.pr)}원</span>
+        </div>
+        ${todText?`<div class="trade-card-section">
+          <div class="trade-card-label">🟢 오늘 추천</div>
+          <div class="trade-card-content" style="background:var(--today-bg);padding:8px;border-radius:6px;">${r.todH||todText}</div>
+        </div>`:''}
+        ${m2Text?`<div class="trade-card-section">
+          <div class="trade-card-label">결과 / 반성</div>
+          <div class="trade-card-content">${r.m2H||m2Text}</div>
+        </div>`:''}
+        ${imgs}
+      </div>
+      <div class="trade-card-acts">
+        <button class="btn" onclick="openEdit('${r.id}')">✏️ 수정</button>
+        <button class="btn btn-r" onclick="quickDelete('${r.id}')">🗑 삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
   const startPr=roundStartPr(curRound);
   const rate=startPr?cum/startPr*100:0;
   document.getElementById('s-init').textContent=fmt(startPr)+'원';
