@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>원금의 2배 만들기 × 5회</title>
+<title>원금X2 매매일지</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -224,7 +224,28 @@ td:last-child{border-right:none;}
 .fg-label-hint{font-size:9px;color:var(--amber);background:var(--amber-bg);
   padding:1px 6px;border-radius:3px;border:1px solid rgba(230,119,0,.2);}
 
-/* round selector in modal */
+/* image upload */
+#img-upload-btn:hover{border-color:var(--green);color:var(--green);background:var(--green-bg,#ebfbee);}
+.img-thumb-wrap{position:relative;width:80px;height:80px;border-radius:7px;
+  overflow:hidden;border:1px solid var(--border);flex-shrink:0;background:var(--bg3);}
+.img-thumb-wrap img{width:100%;height:100%;object-fit:cover;cursor:pointer;display:block;}
+.img-thumb-del{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;
+  background:rgba(0,0,0,.55);color:#fff;border:none;cursor:pointer;
+  font-size:10px;display:flex;align-items:center;justify-content:center;line-height:1;}
+.img-thumb-del:hover{background:var(--red);}
+.img-thumb-loading{display:flex;align-items:center;justify-content:center;
+  width:80px;height:80px;border-radius:7px;border:1px dashed var(--border2);
+  background:var(--bg2);font-size:10px;color:var(--text3);}
+/* image viewer overlay */
+.img-viewer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);
+  z-index:700;align-items:center;justify-content:center;cursor:zoom-out;}
+.img-viewer.show{display:flex;}
+.img-viewer img{max-width:92vw;max-height:88vh;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.5);}
+/* table image thumbnails */
+.tbl-imgs{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;}
+.tbl-img{width:48px;height:48px;object-fit:cover;border-radius:5px;
+  cursor:pointer;border:1px solid var(--border);transition:transform .15s;}
+.tbl-img:hover{transform:scale(1.08);}
 .round-sel{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:4px;}
 .rsel-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border2);
   background:var(--bg2);font-size:12px;font-weight:500;cursor:pointer;
@@ -259,7 +280,7 @@ td:last-child{border-right:none;}
   <div class="hdr-l">
     <div class="logo">📈</div>
     <div>
-      <div class="hdr-title">원금의 2배 만들기 × 5회</div>
+      <div class="hdr-title">원금X2</div>
       <div class="hdr-sub">매매 일지 · Google Sheets 연동</div>
     </div>
   </div>
@@ -342,7 +363,12 @@ td:last-child{border-right:none;}
   </div>
 </div>
 
-<!-- ROUND SETTINGS MODAL -->
+<!-- 이미지 전체화면 뷰어 -->
+<div class="img-viewer" id="img-viewer" onclick="closeViewer()">
+  <img id="img-viewer-img" src="" alt="차트"/>
+</div>
+
+
 <div class="overlay" id="round-settings-modal" onclick="if(event.target===this)closeRoundSettings()">
   <div class="modal" style="max-width:480px;">
     <div class="modal-hdr">
@@ -544,7 +570,31 @@ async function saveRoundSettings(){
         style="min-height:110px;"></div>
     </div>
 
-    <div class="del-confirm" id="del-confirm">
+    <!-- 차트 이미지 첨부 -->
+    <div style="margin-top:10px;">
+      <div class="fg-label-row">
+        <label>📊 차트 이미지 첨부</label>
+        <span style="font-size:9px;color:var(--text3);">최대 5장 · JPG/PNG/GIF</span>
+      </div>
+      <!-- 업로드 버튼 -->
+      <label for="img-file-input" id="img-upload-btn"
+        style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+               padding:7px 14px;border:1.5px dashed var(--border2);border-radius:7px;
+               font-size:12px;color:var(--text3);background:var(--bg2);
+               transition:all .15s;margin-bottom:8px;">
+        <span style="font-size:16px;">🖼</span> 이미지 선택 (클릭 또는 드래그)
+      </label>
+      <input type="file" id="img-file-input" accept="image/*" multiple
+        style="display:none;" onchange="handleImgSelect(event)"/>
+      <!-- 업로드 진행 -->
+      <div id="img-uploading" style="display:none;font-size:11px;color:var(--amber);
+        margin-bottom:6px;display:none;align-items:center;gap:5px;">
+        <div class="spin" style="border-color:var(--amber);border-top-color:transparent;"></div>
+        업로드 중...
+      </div>
+      <!-- 이미지 미리보기 목록 -->
+      <div id="img-preview-list" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+    </div>
       <p>⚠️ 이 기록을 삭제하면 Google Sheets에서도 영구 삭제됩니다. 계속할까요?</p>
       <div style="display:flex;gap:8px;">
         <button class="btn btn-r" id="del-confirm-btn" onclick="doDelete()">삭제 확인</button>
@@ -566,7 +616,7 @@ async function saveRoundSettings(){
 /* ══════════════════════════════
    CONFIG & STATE
 ══════════════════════════════ */
-const SCRIPT_URL='https://script.google.com/macros/s/AKfycbwYl4xtRfUMHV9dT2Ow_pDsKg7d4xvTpXOQZIDZLLuNvVd_qYIwkoFDATc_ccLb3Vy1Ww/exec';
+const SCRIPT_URL='https://script.google.com/macros/s/AKfycbxhwJh8oDla9h2MqVdLGmvSLEMCgppy0XvhhI84VNLWXbrzM-Gjrwd0s0k7cn1ewxe87g/exec';
 
 // 회차 설정 — Google Sheets "설정" 시트에서 불러옴
 const DEFAULT_ROUNDS = [
@@ -810,6 +860,7 @@ function openAdd(){
   document.getElementById('f-pnl').value='';
   document.getElementById('f-rt').value='';
   clearCE('f-today'); clearCE('f-m2');
+  resetImgUpload();
   autoFillPrincipal();
   document.getElementById('modal').classList.add('open');
 }
@@ -833,6 +884,8 @@ function openEdit(id){
   document.getElementById('f-rt').value=rt?rt.toFixed(2)+'%':'';
   setCE('f-today',row.todH ||esc(row.tod||'').replace(/\n/g,'<br>'));
   setCE('f-m2',   row.m2H  ||esc(row.m2||'').replace(/\n/g,'<br>'));
+  // 기존 이미지 로드
+  resetImgUpload(row.images||[]);
   calcLive();
   document.getElementById('modal').classList.add('open');
 }
@@ -856,7 +909,8 @@ async function saveRow(){
     date,pr,pnl,rt,
     round:_modalRound,
     tod:getCEText('f-today'), m2:getCEText('f-m2'),
-    todH:getCEHtml('f-today'), m2H:getCEHtml('f-m2')
+    todH:getCEHtml('f-today'), m2H:getCEHtml('f-m2'),
+    images: _uploadedImages.map(i=>({url:i.url, fileId:i.fileId, name:i.name}))
   };
   try{
     if(_editId) await apiUpdate({id:_editId,...payload});
@@ -929,6 +983,7 @@ function render(){
       </td>
       <td><div class="td-memo-wrap">
         <div class="rich" data-rid="${r.id}" data-fld="m2H">${m2H||'<span style="color:var(--text4);font-size:11px">—</span>'}</div>
+        ${(r.images&&r.images.length)?`<div class="tbl-imgs">${r.images.map(img=>`<img class="tbl-img" src="${img.url}" alt="차트" onclick="openViewer('${img.url}')" title="${img.name||''}">`).join('')}</div>`:''}
       </div></td>
       <td><div class="act-btns">
         <button class="ic-btn edit" title="수정" onclick="openEdit('${r.id}')">✏️</button>
@@ -977,6 +1032,92 @@ function updateSummary(init,cur,cum){
   document.getElementById('ptxt').textContent=
     done?`🎉 ${ROUND_NAMES()[curRound-1]} 목표 달성!`:
     (cur?`목표까지 ${fmt(Math.max(target-cur,0))}원 남음`:'');
+}
+
+/* ══════════════════════════════
+   이미지 업로드
+══════════════════════════════ */
+let _uploadedImages = []; // [{url, fileId, name}]
+
+function resetImgUpload(existing=[]){
+  _uploadedImages = existing.map(i=>({...i}));
+  renderImgPreviews();
+}
+
+function renderImgPreviews(){
+  const list=document.getElementById('img-preview-list');
+  list.innerHTML='';
+  _uploadedImages.forEach((img,i)=>{
+    const wrap=document.createElement('div');
+    wrap.className='img-thumb-wrap';
+    wrap.innerHTML=`
+      <img src="${img.url}" alt="차트${i+1}" onclick="openViewer('${img.url}')"/>
+      <button class="img-thumb-del" onclick="removeImg(${i})" title="삭제">✕</button>`;
+    list.appendChild(wrap);
+  });
+}
+
+function removeImg(i){
+  _uploadedImages.splice(i,1);
+  renderImgPreviews();
+}
+
+async function handleImgSelect(e){
+  const files=Array.from(e.target.files);
+  if(!files.length) return;
+  const remain=5-_uploadedImages.length;
+  if(remain<=0){ alert('이미지는 최대 5장까지 첨부할 수 있습니다.'); return; }
+  const toUpload=files.slice(0,remain);
+  if(files.length>remain) alert(`5장 제한으로 ${toUpload.length}장만 업로드합니다.`);
+
+  const ind=document.getElementById('img-uploading');
+  ind.style.display='flex';
+
+  for(const file of toUpload){
+    try{
+      // File → base64
+      const b64=await new Promise((res,rej)=>{
+        const reader=new FileReader();
+        reader.onload=()=>res(reader.result.split(',')[1]);
+        reader.onerror=rej;
+        reader.readAsDataURL(file);
+      });
+      // 로딩 썸네일 표시
+      const loadDiv=document.createElement('div');
+      loadDiv.className='img-thumb-loading';
+      loadDiv.textContent='업로드중';
+      document.getElementById('img-preview-list').appendChild(loadDiv);
+
+      const result=await apiFetch('POST',{
+        action:'uploadImage',
+        data:b64,
+        mimeType:file.type||'image/jpeg',
+        fileName:file.name||'chart.jpg'
+      });
+      loadDiv.remove();
+
+      if(result.ok){
+        _uploadedImages.push({url:result.url, fileId:result.fileId, name:file.name});
+        renderImgPreviews();
+      } else {
+        alert('업로드 실패: '+result.error);
+      }
+    }catch(err){
+      alert('업로드 오류: '+err.message);
+    }
+  }
+  ind.style.display='none';
+  // input 초기화 (같은 파일 재선택 가능하게)
+  e.target.value='';
+}
+
+// 이미지 전체화면 뷰어
+function openViewer(url){
+  document.getElementById('img-viewer-img').src=url;
+  document.getElementById('img-viewer').classList.add('show');
+}
+function closeViewer(){
+  document.getElementById('img-viewer').classList.remove('show');
 }
 
 /* ══════════════════════════════
